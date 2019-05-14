@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Movies</string>
+    <string name="settings">Settings</string>
+    <string name="error">Movie Info Unavailable</string>
+    <string name="view_position">Position</string>
+    <string name="no_network_connection">No Internet Connection Found!</string>
+    <string name="no_movies">No Movies!</string>
+    <string name="checkboxfav">Definitely a classic!</string>
+    <string name="trailer">Trailer </string>
+
+    <string name="popular">Most Popular</string>
+    <string name="top_rated">Top-Rated</string>
+    <string name="favorites">Favorites</string>
+
+    <string name="url">http://image.tmdb.org/t/p/w342/</string>
+</resources>
