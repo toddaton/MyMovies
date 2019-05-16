@@ -34,7 +34,7 @@ public class MovieTrailerAdapter extends RecyclerView.Adapter<MovieTrailerAdapte
     public void onBindViewHolder(MovieTrailerViewHolder holder, int position) {
         Trailer trailer = mListTrailers.get(position);
 
-        holder.mTextView.setText(R.string.trailer + position);
+        holder.mTextView.setText(trailer.getTrailerNumber());
 
         holder.mImageView.setImageResource(R.drawable.ic_launcher_foreground);
     }
