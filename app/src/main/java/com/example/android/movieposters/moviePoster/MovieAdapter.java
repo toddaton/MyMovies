@@ -24,6 +24,10 @@ public class MovieAdapter extends BaseAdapter {
 
     private static LayoutInflater inflater = null;
 
+    public MovieAdapter(){
+
+    }
+
     public MovieAdapter(Context c, List<MoviePoster> movieData) {
         mContext = c;
         mMovieData = movieData;
