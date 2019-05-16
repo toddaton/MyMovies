@@ -60,4 +60,28 @@ public class MoviePoster {
         return mReleaseDate;
     }
 
+    public void setMoviePosterId(String id){
+        mId = id;
+    }
+
+    public void setOriginalTitle(String originalTitle){
+        mOriginalTitle = originalTitle;
+    }
+
+    public void setImageURL(String imageURL){
+        mImageURL = imageURL;
+    }
+
+    public void setPlotSynopsis(String plotSynopsis){
+        mPlotSynopsis = plotSynopsis;
+    }
+
+    public void setUserRating(String userRating){
+        mUserRating = userRating;
+    }
+
+    public void setReleaseDate(String releaseDate){
+        mReleaseDate = releaseDate;
+    }
+
 }
