@@ -30,3 +30,4 @@ public class TrailerLoader extends AsyncTaskLoader<List<Trailer>> {
     }
 
 }
+
