@@ -23,6 +23,8 @@ import com.example.android.movieposters.trailer.TrailerLoader;
 import com.squareup.picasso.Picasso;
 //import com.squareup.picasso.Picasso;
 
+import org.w3c.dom.Text;
+
 import java.util.List;
 
 public class MovieDetails extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Trailer>>{
@@ -51,17 +53,100 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
     public static final String EXTRA_MOVIE_ID = "extraMovieId";
 
+    private static final String LIFECYCLE_CALLBACKS_TITLE_KEY = "movieTitle";
 
-    @Override
+    private static final String LIFECYCLE_CALLBACKS_IMAGE_KEY = "movieImage";
+
+    private static final String LIFECYCLE_CALLBACKS_PLOT_KEY = "moviePlotSynopsis";
+
+    private static final String LIFECYCLE_CALLBACKS_RATING_KEY = "movieRating";
+
+    private static final String LIFECYCLE_CALLBACKS_DATE_KEY = "movieReleaseDate";
+
+    private TextView mOriginalTitleTV;
+
+    private TextView mPlotSynopsisTV;
+
+    private TextView mUserRatingTV;
+
+    private TextView mReleaseDateTV;
+
+
+    /**@Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putInt(INSTANCE_MOVIE_ID, mMovieId);
         super.onSaveInstanceState(outState);
+    }**/
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt(INSTANCE_MOVIE_ID, mMovieId);
+
+        String originalTitle = mCurrentMoviePoster.getOriginalTitle();
+        outState.putString(LIFECYCLE_CALLBACKS_TITLE_KEY, originalTitle);
+
+        String imageURL = mCurrentMoviePoster.getImageURL();
+        outState.putString(LIFECYCLE_CALLBACKS_IMAGE_KEY, imageURL);
+
+        String plotSynopsis = mCurrentMoviePoster.getPlotSynopsis();
+        outState.putString(LIFECYCLE_CALLBACKS_PLOT_KEY, plotSynopsis);
+
+        String userRating = mCurrentMoviePoster.getUserRating();
+        outState.putString(LIFECYCLE_CALLBACKS_RATING_KEY, userRating);
+
+        String releaseDate = mCurrentMoviePoster.getReleaseDate();
+        outState.putString(LIFECYCLE_CALLBACKS_DATE_KEY, releaseDate);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_details);
+
+        mOriginalTitleTV = (TextView) findViewById(R.id.originalTitle);
+
+        mPlotSynopsisTV = (TextView) findViewById(R.id.plotSynopsis);
+
+        mUserRatingTV = (TextView) findViewById(R.id.userRating);
+
+        mReleaseDateTV = (TextView) findViewById(R.id.releaseDate);
+
+        ImageView imageView = (ImageView) findViewById(R.id.detailsImage);
+
+        if(savedInstanceState != null) {
+            if (savedInstanceState.containsKey(LIFECYCLE_CALLBACKS_TITLE_KEY)) {
+                String titleKey = savedInstanceState
+                        .getString(LIFECYCLE_CALLBACKS_TITLE_KEY);
+                //mCurrentMoviePoster.setOriginalTitle(titleKey);
+                mOriginalTitleTV.setText(titleKey);
+            }
+            if(savedInstanceState.containsKey(LIFECYCLE_CALLBACKS_IMAGE_KEY)){
+                String imageKey = savedInstanceState
+                        .getString(LIFECYCLE_CALLBACKS_IMAGE_KEY);
+                String path = getString(R.string.url);
+                Picasso.with(this).load(path + imageKey).into(imageView);
+            }
+            if(savedInstanceState.containsKey(LIFECYCLE_CALLBACKS_PLOT_KEY)){
+                String plotSynopsisKey = savedInstanceState
+                        .getString(LIFECYCLE_CALLBACKS_PLOT_KEY);
+                //mCurrentMoviePoster.setPlotSynopsis(plotSynopsisKey);
+                mPlotSynopsisTV.setText(plotSynopsisKey);
+            }
+            if(savedInstanceState.containsKey(LIFECYCLE_CALLBACKS_RATING_KEY)){
+                String ratingKey = savedInstanceState
+                        .getString(LIFECYCLE_CALLBACKS_RATING_KEY);
+                //mCurrentMoviePoster.setUserRating(ratingKey);
+                mUserRatingTV.setText(ratingKey);
+            }
+            if(savedInstanceState.containsKey(LIFECYCLE_CALLBACKS_DATE_KEY)){
+                String releaseDateKey = savedInstanceState
+                        .getString(LIFECYCLE_CALLBACKS_DATE_KEY);
+                //mCurrentMoviePoster.setReleaseDate(releaseDateKey);
+                mReleaseDateTV.setText(releaseDateKey);
+            }
+        }
 
         initViews();
 
@@ -87,15 +172,14 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
         mCurrentMoviePoster = MovieAdapter.mMovieData.get(imageNumber);
 
-        ImageView imageView = (ImageView) findViewById(R.id.detailsImage);
-
         Uri.Builder trailerBuilder = new Uri.Builder();
-        trailerBuilder.scheme("https")
+        trailerBuilder.scheme("http")
                 .authority("api.themoviedb.org")
                 .appendPath("3")
                 .appendPath("movie")
                 .appendPath(mCurrentMoviePoster.getId())
-                .appendQueryParameter("api_key", Insert API Key here!);
+                .appendPath("videos")
+                .appendQueryParameter("api_key", Insert API Key);
 
         mMovieTrailerUrl = trailerBuilder.build().toString();
 
@@ -105,7 +189,7 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
                 .appendPath("3")
                 .appendPath("review")
                 .appendPath(mCurrentMoviePoster.getId())
-                .appendQueryParameter("api_key", Insert API Key here!);
+                .appendQueryParameter("api_key", Insert API Key);
 
         populateUi();
 
@@ -142,6 +226,7 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
         TextView releaseDate = (TextView) findViewById(R.id.releaseDate);
         releaseDate.setText(mCurrentMoviePoster.getReleaseDate());
+
     }
 
     private void initViews(){
