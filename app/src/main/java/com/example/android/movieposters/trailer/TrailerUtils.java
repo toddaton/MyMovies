@@ -122,13 +122,14 @@ public final class TrailerUtils {
             for(int i = 0; i < resultsJsonArray.length(); i++){
                 JSONObject currentTrailer = resultsJsonArray.getJSONObject(i);
 
-                String trailerName = currentTrailer.optString("name");
+                String key = currentTrailer.optString("key");
 
-                Trailer trailer = new Trailer(R.drawable.play_icon, "i", trailerName);
+                String youtubeUrl = "https://www.youtube.com/watch?v=" + key;
+
+                Trailer trailer = new Trailer(R.drawable.play_icon, "Video "+i, youtubeUrl);
 
                 trailers.add(trailer);
             }
-
 
         } catch (JSONException e) {
             Log.e("ApiUtils", "Problem parsing trailer results", e);
