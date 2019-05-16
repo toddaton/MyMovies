@@ -6,12 +6,12 @@ public class Trailer {
 
     private String mTrailerNumber;
 
-    private String mUrl;
+    private String mYoutubeUrl;
 
     public Trailer(int icon, String trailerNumber, String url){
         mIcon = icon;
         mTrailerNumber = trailerNumber;
-        mUrl = url;
+        mYoutubeUrl = url;
     }
 
     public int getIcon(){
@@ -22,7 +22,7 @@ public class Trailer {
         return mTrailerNumber;
     }
 
-    public String getUrl(){
-        return mUrl;
+    public String getYoutubeUrl(){
+        return mYoutubeUrl;
     }
 }
