@@ -57,7 +57,7 @@ public class UserReviewDetails extends AppCompatActivity implements LoaderManage
                     .appendPath("3")
                     .appendPath("review")
                     .appendPath(mCurrentMoviePoster.getId())
-                    .appendQueryParameter("api_key", "207feff8f2c6bd2e000f64463742abea");
+                    .appendQueryParameter("api_key", "Insert API KEY Here");
 
             mUserReviewUrl = reviewBuilder.build().toString();
         }
