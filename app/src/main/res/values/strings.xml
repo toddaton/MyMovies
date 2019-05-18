@@ -7,6 +7,7 @@
     <string name="no_movies">No Movies!</string>
     <string name="checkboxfav">Definitely a classic!</string>
     <string name="trailer">Trailer </string>
+    <string name="user_review_number">Review </string>
 
     <string name="popular">Most Popular</string>
     <string name="top_rated">Top-Rated</string>
