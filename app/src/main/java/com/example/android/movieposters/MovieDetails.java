@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.Loader;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -15,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.android.movieposters.database.Database;
 import com.example.android.movieposters.moviePoster.MovieAdapter;
 import com.example.android.movieposters.moviePoster.MoviePoster;
 import com.example.android.movieposters.trailer.MovieTrailerAdapter;
@@ -22,8 +22,6 @@ import com.example.android.movieposters.trailer.Trailer;
 import com.example.android.movieposters.trailer.TrailerLoader;
 import com.squareup.picasso.Picasso;
 //import com.squareup.picasso.Picasso;
-
-import org.w3c.dom.Text;
 
 import java.util.List;
 
@@ -37,9 +35,13 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
     public static String mMovieTrailerUrl;
 
+    public static String mUserReviewUrl;
+
     private MovieTrailerAdapter mMovieTrailerAdapter;
 
     private RecyclerView mRecyclerView;
+
+    private RecyclerView mUserReviewRecyclerView;
 
     public static CheckBox mFavoritesCheckBox;
 
@@ -162,42 +164,60 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
         if (imageNumber == DEFAULT_POSITION) {
             Toast.makeText(this, R.string.error, Toast.LENGTH_LONG).show();
+        }else{
+
+            mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+
+            mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+            mFavoritesCheckBox = (CheckBox) findViewById(R.id.checkbox);
+
+            mCurrentMoviePoster = MovieAdapter.mMovieData.get(imageNumber);
+
+            Uri.Builder trailerBuilder = new Uri.Builder();
+            trailerBuilder.scheme("http")
+                    .authority("api.themoviedb.org")
+                    .appendPath("3")
+                    .appendPath("movie")
+                    .appendPath(mCurrentMoviePoster.getId())
+                    .appendPath("videos")
+                    .appendQueryParameter("api_key", "Insert API KEY Here");
+
+            mMovieTrailerUrl = trailerBuilder.build().toString();
+
+            populateUi();
+
+            String path = getString(R.string.url);
+
+            Picasso.with(this).load(path + mCurrentMoviePoster.getImageURL()).into(imageView);
+
+            mRecyclerView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    launchTrailer(v);
+                }
+            });
+
+            getLoaderManager().initLoader(R.layout.activity_movie_details, new Bundle(), new LoaderManager.LoaderCallbacks<List<Trailer>>(){
+
+                @Override
+                public Loader<List<Trailer>> onCreateLoader(int id, Bundle args) {
+                    return new TrailerLoader(MovieDetails.this, mMovieTrailerUrl);
+                }
+
+                @Override
+                public void onLoadFinished(Loader<List<Trailer>> loader, List<Trailer> data) {
+                    mMovieTrailerAdapter= new MovieTrailerAdapter(MovieDetails.this, data);
+                    mRecyclerView.setAdapter(mMovieTrailerAdapter);
+                }
+
+                @Override
+                public void onLoaderReset(Loader<List<Trailer>> loader) {
+                }
+            });
         }
-
-        mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        mFavoritesCheckBox = (CheckBox) findViewById(R.id.checkbox);
-
-        mCurrentMoviePoster = MovieAdapter.mMovieData.get(imageNumber);
-
-        Uri.Builder trailerBuilder = new Uri.Builder();
-        trailerBuilder.scheme("http")
-                .authority("api.themoviedb.org")
-                .appendPath("3")
-                .appendPath("movie")
-                .appendPath(mCurrentMoviePoster.getId())
-                .appendPath("videos")
-                .appendQueryParameter("api_key", Insert API Key);
-
-        mMovieTrailerUrl = trailerBuilder.build().toString();
-
-        Uri.Builder reviewBuilder = new Uri.Builder();
-        reviewBuilder.scheme("https")
-                .authority("api.themoviedb.org")
-                .appendPath("3")
-                .appendPath("review")
-                .appendPath(mCurrentMoviePoster.getId())
-                .appendQueryParameter("api_key", Insert API Key);
-
-        populateUi();
-
-        String path = getString(R.string.url);
-
-        Picasso.with(this).load(path + mCurrentMoviePoster.getImageURL()).into(imageView);
-
     }
+
 
     @Override
     public Loader<List<Trailer>> onCreateLoader(int id, Bundle args) {
@@ -249,5 +269,11 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
         mDatabase.movieDao().insertMovie(moviePoster);
 
         finish();
+    }
+
+    public void launchTrailer(View v){
+        Intent youtubeIntent = new Intent();
+        youtubeIntent.setAction(Intent.ACTION_VIEW);
+        startActivity(youtubeIntent);
     }
 }
