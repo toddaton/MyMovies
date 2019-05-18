@@ -14,14 +14,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.TextView;
 
+import com.example.android.movieposters.database.Database;
 import com.example.android.movieposters.moviePoster.MovieAdapter;
 import com.example.android.movieposters.moviePoster.MoviePoster;
 import com.example.android.movieposters.moviePoster.MoviePosterLoader;
+import com.example.android.movieposters.trailer.MovieTrailerAdapter;
 
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<MoviePoster>> {
@@ -47,6 +46,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private Database mDatabase;
 
     private boolean mUrlBool;
+
+    private MovieTrailerAdapter mMovieTrailerAdapter;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -110,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 .appendPath("3")
                 .appendPath("movie")
                 .appendPath("popular")
-                .appendQueryParameter("api_key", Insert API Key);
+                .appendQueryParameter("api_key", "Insert API KEY Here");
 
         mPopularUrl = popularBuilder.build().toString();
 
@@ -120,7 +121,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 .appendPath("3")
                 .appendPath("movie")
                 .appendPath("top_rated")
-                .appendQueryParameter("api_key", Insert API Key);
+                .appendQueryParameter("api_key", "Insert API KEY Here");
 
         mTopRatedUrl = topRatedBuilder.build().toString();
 
@@ -134,6 +135,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 launchMovieDetails(position);
+                launchUserReviewDetails(position);
             }
         });
 
@@ -160,6 +162,14 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         Intent intent = new Intent(this, com.example.android.movieposters.MovieDetails.class);
 
         intent.putExtra(com.example.android.movieposters.MovieDetails.POSITION, position);
+
+        startActivity(intent);
+    }
+
+    private void launchUserReviewDetails(int position){
+        Intent intent = new Intent(this, UserReviewDetails.class);
+
+        intent.putExtra(UserReviewDetails.USER_POSITION, position);
 
         startActivity(intent);
     }
