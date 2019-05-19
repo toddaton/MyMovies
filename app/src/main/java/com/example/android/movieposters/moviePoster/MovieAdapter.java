@@ -38,7 +38,6 @@ public class MovieAdapter extends BaseAdapter {
         return mMovieData.size();
     }
 
-
     public Object getItem(int position) {
         return position;
     }
@@ -48,7 +47,7 @@ public class MovieAdapter extends BaseAdapter {
     }
 
     public void setMovies(List<MoviePoster> moviePosters){
-        mSetMovies = moviePosters;
+        mMovieData = moviePosters;
         notifyDataSetChanged();
     }
 
