@@ -73,6 +73,19 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
     private TextView mReleaseDateTV;
 
+    public static final String EXTRA_ID = "ID";
+
+    public static final String EXTRA_ORIGINAL_TITLE = "ORIGINALTITLE";
+
+    public static final String EXTRA_IMAGE_URL = "IMAGEURL";
+
+    public static final String EXTRA_PLOT_SYNOPSIS = "PLOTSYNOPSIS";
+
+    public static final String EXTRA_USER_RATING = "USERRATING";
+
+    public static final String EXTRA_RELEASE_DATE = "RELEASEDATE";
+
+
 
     /**@Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -170,9 +183,35 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
             mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+            mCurrentMoviePoster = MovieAdapter.mMovieData.get(imageNumber);
+
             mFavoritesCheckBox = (CheckBox) findViewById(R.id.checkbox);
 
-            mCurrentMoviePoster = MovieAdapter.mMovieData.get(imageNumber);
+            mFavoritesCheckBox.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v) {
+                    Intent checkBoxClickedIntent= new Intent();
+
+                    String moviePosterId = mCurrentMoviePoster.getId();
+                    checkBoxClickedIntent.putExtra(EXTRA_ID, moviePosterId);
+
+                    String moviePosterOriginalTitle = mCurrentMoviePoster.getOriginalTitle();
+                    checkBoxClickedIntent.putExtra(EXTRA_ORIGINAL_TITLE, moviePosterOriginalTitle);
+
+                    String moviePosterImageURL = mCurrentMoviePoster.getImageURL();
+                    checkBoxClickedIntent.putExtra(EXTRA_IMAGE_URL, moviePosterImageURL);
+
+                    String moviePosterPlotSynopsis = mCurrentMoviePoster.getPlotSynopsis();
+                    checkBoxClickedIntent.putExtra(EXTRA_PLOT_SYNOPSIS, moviePosterPlotSynopsis);
+
+                    String moviePosterUserRating = mCurrentMoviePoster.getUserRating();
+                    checkBoxClickedIntent.putExtra(EXTRA_USER_RATING, moviePosterUserRating);
+
+                    String moviePosterReleaseDate = mCurrentMoviePoster.getReleaseDate();
+                    checkBoxClickedIntent.putExtra(EXTRA_RELEASE_DATE, moviePosterReleaseDate);
+                    setResult(RESULT_OK, checkBoxClickedIntent);
+                }
+            });
 
             Uri.Builder trailerBuilder = new Uri.Builder();
             trailerBuilder.scheme("http")
