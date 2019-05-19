@@ -1,12 +1,14 @@
-package com.example.android.movieposters;
+package com.example.android.movieposters.database;
 
+import android.arch.persistence.db.SupportSQLiteDatabase;
 import android.arch.persistence.room.Room;
 import android.arch.persistence.room.RoomDatabase;
 import android.content.Context;
+import android.support.annotation.NonNull;
 
 import com.example.android.movieposters.moviePoster.MoviePoster;
 
-@android.arch.persistence.room.Database(entities = {MoviePoster.class}, version = 1, exportSchema = false)
+@android.arch.persistence.room.Database(entities = {MoviePoster.class}, version = 1)
 public abstract class Database extends RoomDatabase {
 
     private static final String LOG_TAG = Database.class.getSimpleName();
@@ -19,6 +21,7 @@ public abstract class Database extends RoomDatabase {
             synchronized (LOCK) {
                 sInstance = Room.databaseBuilder(context.getApplicationContext(),
                         Database.class, Database.DATABASE_NAME)
+                        .addCallback(sDatabaseCallback)
                         .allowMainThreadQueries()
                         .build();
             }
@@ -27,4 +30,12 @@ public abstract class Database extends RoomDatabase {
     }
 
     public abstract MovieDao movieDao();
+
+    private static Database.Callback sDatabaseCallback = new Database.Callback(){
+        @Override
+        public void onOpen(@NonNull SupportSQLiteDatabase db) {
+            super.onOpen(db);
+            new PopulateDatabaseAsync(sInstance).execute();
+        }
+    };
 }
