@@ -1,12 +1,15 @@
 package com.example.android.movieposters;
 
 import android.app.LoaderManager;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -16,6 +19,7 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 
 import com.example.android.movieposters.database.Database;
+import com.example.android.movieposters.database.MoviePosterViewModel;
 import com.example.android.movieposters.moviePoster.MovieAdapter;
 import com.example.android.movieposters.moviePoster.MoviePoster;
 import com.example.android.movieposters.moviePoster.MoviePosterLoader;
@@ -28,6 +32,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private static final String LIFECYCLE_CALLBACKS_TEXT_KEY = "callbacks";
 
     private static final String ON_SAVE_INSTANCE_STATE = "onSaveInstanceState";
+
+    public static final int NEW_MOVIE_ACTIVITY_REQUEST_CODE = 1;
 
     private static final String URL_BOOLEAN = "urlBoolean";
 
@@ -47,7 +53,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private boolean mUrlBool;
 
-    private MovieTrailerAdapter mMovieTrailerAdapter;
+    private MoviePosterViewModel mMoviePosterViewModel;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -135,7 +141,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 launchMovieDetails(position);
-                launchUserReviewDetails(position);
             }
         });
 
@@ -149,13 +154,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
 
         mDatabase = Database.getInstance(getApplicationContext());
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        mMovieAdapter = new MovieAdapter();
-        mMovieAdapter.setMovies(mDatabase.movieDao().loadAllTasks());
+        mMoviePosterViewModel = ViewModelProviders.of(this).get(MoviePosterViewModel.class);
+
+        mMoviePosterViewModel.getFavoriteMovies().observe(this, new Observer<List<MoviePoster>>() {
+            @Override
+            public void onChanged(@Nullable final List<MoviePoster> moviePosters) {
+                mMovieAdapter.setMovies(moviePosters);
+            }
+        });
     }
 
     private void launchMovieDetails(int position){
@@ -166,13 +173,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         startActivity(intent);
     }
 
-    private void launchUserReviewDetails(int position){
+    /**private void launchUserReviewDetails(int position){
         Intent intent = new Intent(this, UserReviewDetails.class);
 
         intent.putExtra(UserReviewDetails.USER_POSITION, position);
 
         startActivity(intent);
-    }
+    }**/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -249,6 +256,18 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public void onLoaderReset(Loader<List<MoviePoster>> loader) {
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if(requestCode == NEW_MOVIE_ACTIVITY_REQUEST_CODE && resultCode == RESULT_OK){
+            MoviePoster moviePoster = new MoviePoster(data.getStringExtra(MovieDetails.EXTRA_ID),
+                    data.getStringExtra(MovieDetails.EXTRA_ORIGINAL_TITLE), data.getStringExtra(MovieDetails.EXTRA_IMAGE_URL),
+                    data.getStringExtra(MovieDetails.EXTRA_PLOT_SYNOPSIS), data.getStringExtra(MovieDetails.EXTRA_USER_RATING),
+                    data.getStringExtra(MovieDetails.EXTRA_RELEASE_DATE));
+            mMoviePosterViewModel.insert(moviePoster);
+        }
     }
 
 }
