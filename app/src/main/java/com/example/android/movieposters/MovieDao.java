@@ -1,5 +1,6 @@
-package com.example.android.movieposters;
+package com.example.android.movieposters.database;
 
+import android.arch.lifecycle.LiveData;
 import android.arch.persistence.room.Dao;
 import android.arch.persistence.room.Delete;
 import android.arch.persistence.room.Insert;
@@ -15,7 +16,7 @@ import java.util.List;
 public interface MovieDao {
 
     @Query("SELECT * FROM movieposter ORDER BY mId")
-    List<MoviePoster> loadAllTasks();
+    LiveData<List<MoviePoster>> loadAllTasks();
 
     @Insert
     void insertMovie(MoviePoster moviePoster);
@@ -25,4 +26,7 @@ public interface MovieDao {
 
     @Delete
     void deleteMovie(MoviePoster moviePoster);
+
+    @Query("DELETE FROM movieposter")
+    void deleteAllMovies();
 }
