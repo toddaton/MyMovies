@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 .appendPath("3")
                 .appendPath("movie")
                 .appendPath("popular")
-                .appendQueryParameter("api_key", "Insert API KEY Here");
+                .appendQueryParameter("api_key", "API KEY HERE");
 
         mPopularUrl = popularBuilder.build().toString();
 
@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 .appendPath("3")
                 .appendPath("movie")
                 .appendPath("top_rated")
-                .appendQueryParameter("api_key", "Insert API KEY Here");
+                .appendQueryParameter("api_key", "INSERT API KEY HERE");
 
         mTopRatedUrl = topRatedBuilder.build().toString();
 
@@ -160,7 +160,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mMoviePosterViewModel.getFavoriteMovies().observe(this, new Observer<List<MoviePoster>>() {
             @Override
             public void onChanged(@Nullable final List<MoviePoster> moviePosters) {
-                mMovieAdapter.setMovies(moviePosters);
+                mMovieAdapter = new MovieAdapter(MainActivity.this, moviePosters);
+                mGridView.setAdapter(mMovieAdapter);
             }
         });
     }
