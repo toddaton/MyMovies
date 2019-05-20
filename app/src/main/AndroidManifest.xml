@@ -20,6 +20,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".MovieDetails" />
-    </application>
+        <activity android:name=".MovieDetails$UserReviewDetails"/>
+        </application>
 
 </manifest>
