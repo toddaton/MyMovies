@@ -6,19 +6,23 @@ import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
-import com.example.android.movieposters.database.Database;
+import com.example.android.movieposters.database.MoviePosterDatabase;
 import com.example.android.movieposters.database.MoviePosterViewModel;
 import com.example.android.movieposters.moviePoster.MovieAdapter;
 import com.example.android.movieposters.moviePoster.MoviePoster;
@@ -49,30 +53,75 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     public MovieAdapter mMovieAdapter;
 
-    private Database mDatabase;
+    private MoviePosterDatabase mMoviePosterDatabase;
 
     private boolean mUrlBool;
 
     private MoviePosterViewModel mMoviePosterViewModel;
 
+    private static int mScreenPosition = 0;
+
+    private static int mDestroyScreenPosition = 0;
+
+    private static boolean mOnDestroyCalled;
+
+    private static final String RESTORE_BOOLEAN = "restore_boolean";
+
+    private static final int POPULAR_URL_KEY = 1;
+
+    private static final int TOP_RATED_URL_KEY = 2;
+
+    private LoaderManager.LoaderCallbacks<List<MoviePoster>> mPopularLoaderManager;
+
+    private LoaderManager.LoaderCallbacks<List<MoviePoster>> mTopRatedLoaderManager;
+
+    private List<MoviePoster> mFavoriteMovies;
+
+
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-
         outState.putBoolean(URL_BOOLEAN, mUrlBool);
+        outState.putBoolean(RESTORE_BOOLEAN, mOnDestroyCalled);
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        /**if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey(URL_BOOLEAN)){
+                Boolean urlKey = savedInstanceState
+                        .getBoolean(URL_BOOLEAN);
+                if(urlKey){
+                    getLoaderManager().initLoader(POPULAR_URL_KEY, new Bundle(), mPopularLoaderManager);
+                    if(savedInstanceState.containsKey(RESTORE_BOOLEAN)){
+                        Boolean stoppedKey = savedInstanceState.getBoolean(RESTORE_BOOLEAN);
+                        if(stoppedKey){
+                            mGridView.setSelection(mDestroyScreenPosition);
+                        }else{
+                            mGridView.setSelection(mScreenPosition);
+                        }
+                    }
+                } else{
+                    getLoaderManager().initLoader(TOP_RATED_URL_KEY, new Bundle(), mTopRatedLoaderManager);
+                    if(savedInstanceState.containsKey(RESTORE_BOOLEAN)){
+                        Boolean stoppedKeyTwo = savedInstanceState.getBoolean(RESTORE_BOOLEAN);
+                        if(stoppedKeyTwo){
+                            mGridView.setSelection(mDestroyScreenPosition);
+                        }else{
+                            mGridView.setSelection(mScreenPosition);
+                        }
+                    }
+                }
+            }
 
-        if(savedInstanceState != null) {
+        }**/
             if (savedInstanceState.containsKey(URL_BOOLEAN)) {
                 Boolean urlKey = savedInstanceState
                         .getBoolean(URL_BOOLEAN);
                 if (!urlKey) {
-                    getLoaderManager().initLoader(R.layout.activity_main, new Bundle(), new LoaderManager.LoaderCallbacks<List<MoviePoster>>(){
+                    getLoaderManager().initLoader(R.layout.activity_main, new Bundle(), new LoaderManager.LoaderCallbacks<List<MoviePoster>>() {
 
                         @Override
                         public Loader<List<MoviePoster>> onCreateLoader(int id, Bundle args) {
@@ -89,9 +138,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                         public void onLoaderReset(Loader<List<MoviePoster>> loader) {
                         }
                     });
+                    mUrlBool = false;
                 }
-                if(urlKey){
-                    getLoaderManager().initLoader(R.id.detailsImage, new Bundle(), new LoaderManager.LoaderCallbacks<List<MoviePoster>>(){
+                if (urlKey) {
+                    getLoaderManager().initLoader(R.id.detailsImage, new Bundle(), new LoaderManager.LoaderCallbacks<List<MoviePoster>>() {
                         @Override
                         public Loader<List<MoviePoster>> onCreateLoader(int id, Bundle args) {
                             return new MoviePosterLoader(MainActivity.this, mPopularUrl);
@@ -107,9 +157,45 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                         public void onLoaderReset(Loader<List<MoviePoster>> loader) {
                         }
                     });
+                    mUrlBool = true;
                 }
             }
-        }
+
+    }
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        /**if (savedInstanceState != null) {
+            if (savedInstanceState.containsKey(URL_BOOLEAN)) {
+                Boolean urlKey = savedInstanceState
+                        .getBoolean(URL_BOOLEAN);
+                if (urlKey) {
+                    getLoaderManager().initLoader(POPULAR_URL_KEY, new Bundle(), mPopularLoaderManager);
+                    if (savedInstanceState.containsKey(RESTORE_BOOLEAN)) {
+                        Boolean stoppedKey = savedInstanceState.getBoolean(RESTORE_BOOLEAN);
+                        if (stoppedKey) {
+                            mGridView.setSelection(mDestroyScreenPosition);
+                        } else {
+                            mGridView.setSelection(mScreenPosition);
+                        }
+                    }
+                } else {
+                    getLoaderManager().initLoader(TOP_RATED_URL_KEY, new Bundle(), mTopRatedLoaderManager);
+                    if (savedInstanceState.containsKey(RESTORE_BOOLEAN)) {
+                        Boolean stoppedKeyTwo = savedInstanceState.getBoolean(RESTORE_BOOLEAN);
+                        if (stoppedKeyTwo) {
+                            mGridView.setSelection(mDestroyScreenPosition);
+                        } else {
+                            mGridView.setSelection(mScreenPosition);
+                        }
+                    }
+                }
+            }
+        }**/
 
         Uri.Builder popularBuilder = new Uri.Builder();
         popularBuilder.scheme("http")
@@ -117,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 .appendPath("3")
                 .appendPath("movie")
                 .appendPath("popular")
-                .appendQueryParameter("api_key", "API KEY HERE");
+                .appendQueryParameter("api_key", "Insert Api Key");
 
         mPopularUrl = popularBuilder.build().toString();
 
@@ -127,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 .appendPath("3")
                 .appendPath("movie")
                 .appendPath("top_rated")
-                .appendQueryParameter("api_key", "INSERT API KEY HERE");
+                .appendQueryParameter("api_key", "Insert Api Key");
 
         mTopRatedUrl = topRatedBuilder.build().toString();
 
@@ -153,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             loaderManager.initLoader(MOVIE_POSTER_LOADER_ID, null, this);
         }
 
-        mDatabase = Database.getInstance(getApplicationContext());
+        mMoviePosterDatabase = MoviePosterDatabase.getInstance(getApplicationContext());
 
         mMoviePosterViewModel = ViewModelProviders.of(this).get(MoviePosterViewModel.class);
 
@@ -164,6 +250,44 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 mGridView.setAdapter(mMovieAdapter);
             }
         });
+
+        mPopularLoaderManager = new LoaderManager.LoaderCallbacks<List<MoviePoster>>() {
+            @Override
+            public Loader<List<MoviePoster>> onCreateLoader(int id, Bundle args) {
+                return new MoviePosterLoader(MainActivity.this, mPopularUrl);
+            }
+
+            @Override
+            public void onLoadFinished(Loader<List<MoviePoster>> loader, List<MoviePoster> data) {
+                mMovieAdapter = new MovieAdapter(MainActivity.this, data);
+                mGridView.setAdapter(mMovieAdapter);
+            }
+
+            @Override
+            public void onLoaderReset(Loader<List<MoviePoster>> loader) {
+
+            }
+        };
+
+        mTopRatedLoaderManager = new LoaderManager.LoaderCallbacks<List<MoviePoster>>() {
+            @Override
+            public Loader<List<MoviePoster>> onCreateLoader(int id, Bundle args) {
+                return new MoviePosterLoader(MainActivity.this, mTopRatedUrl);
+
+            }
+
+            @Override
+            public void onLoadFinished(Loader<List<MoviePoster>> loader, List<MoviePoster> data) {
+                mMovieAdapter = new MovieAdapter(MainActivity.this, data);
+                mGridView.setAdapter(mMovieAdapter);
+            }
+
+            @Override
+            public void onLoaderReset(Loader<List<MoviePoster>> loader) {
+            }
+        };
+
+       // mFavoriteMovies =
     }
 
     private void launchMovieDetails(int position){
@@ -173,14 +297,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         startActivity(intent);
     }
-
-    /**private void launchUserReviewDetails(int position){
-        Intent intent = new Intent(this, UserReviewDetails.class);
-
-        intent.putExtra(UserReviewDetails.USER_POSITION, position);
-
-        startActivity(intent);
-    }**/
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -236,7 +352,8 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             return true;
 
         }else if(clickedOption == R.id.favorites){
-
+            mMovieAdapter = new MovieAdapter(MainActivity.this, mFavoriteMovies);
+            mGridView.setAdapter(mMovieAdapter);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -271,6 +388,28 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         }
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mScreenPosition = mGridView.getFirstVisiblePosition();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(mOnDestroyCalled){
+            mGridView.setSelection(mDestroyScreenPosition);
+        }else{
+            mGridView.setSelection(mScreenPosition);
+        }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        mDestroyScreenPosition = mGridView.getFirstVisiblePosition();
+        mOnDestroyCalled = true;
+    }
 }
 
 
