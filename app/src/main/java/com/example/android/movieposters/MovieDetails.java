@@ -1,20 +1,26 @@
 package com.example.android.movieposters;
 
 import android.app.LoaderManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.android.movieposters.database.Database;
+import com.example.android.movieposters.database.MoviePosterDatabase;
 import com.example.android.movieposters.moviePoster.MovieAdapter;
 import com.example.android.movieposters.moviePoster.MoviePoster;
 import com.example.android.movieposters.trailer.MovieTrailerAdapter;
@@ -26,9 +32,10 @@ import com.example.android.movieposters.userReview.UserReviewLoader;
 import com.squareup.picasso.Picasso;
 //import com.squareup.picasso.Picasso;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class MovieDetails extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<Trailer>> {
+public class MovieDetails extends AppCompatActivity {
 
     private MoviePoster mCurrentMoviePoster;
 
@@ -44,7 +51,17 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
     public static CheckBox mFavoritesCheckBox;
 
-    private Database mDatabase;
+    private boolean[] mFavoritesList = {false, false, false, false, false, false, false, false, false, false,
+            false, false, false, false, false, false, false, false, false, false};
+
+
+    private MoviePosterDatabase mMoviePosterDatabase;
+
+    private String mUserReviewUrl;
+
+    private UserReviewAdapter mUserReviewAdapter;
+
+    private RecyclerView mUserReviewRecyclerView;
 
     private static final int DEFAULT_MOVIE_ID = -1;
 
@@ -84,6 +101,22 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
     public static final String EXTRA_RELEASE_DATE = "RELEASEDATE";
 
+    private static final int TRAILER_LOADER = 1;
+
+    private static final int USER_REVIEW_LOADER = 2;
+
+    private RecyclerView trailerRecyclerView;
+
+    private static int mScreenPosition = 0;
+
+    private LinearLayoutManager mLinearLayoutManager;
+
+    private Parcelable mListState;
+
+    public static final String SCROLLVIEW = "scrollview";
+
+    private ScrollView mScrollView;
+
 
     /**
      * @Override protected void onSaveInstanceState(Bundle outState) {
@@ -96,7 +129,11 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putInt(INSTANCE_MOVIE_ID, mMovieId);
+        outState.putIntArray(SCROLLVIEW, new int[]{mScrollView.getScrollX(), mScrollView.getScrollY()});
+
+
+
+        /**outState.putInt(INSTANCE_MOVIE_ID, mMovieId);
 
         String originalTitle = mCurrentMoviePoster.getOriginalTitle();
         outState.putString(LIFECYCLE_CALLBACKS_TITLE_KEY, originalTitle);
@@ -111,13 +148,29 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
         outState.putString(LIFECYCLE_CALLBACKS_RATING_KEY, userRating);
 
         String releaseDate = mCurrentMoviePoster.getReleaseDate();
-        outState.putString(LIFECYCLE_CALLBACKS_DATE_KEY, releaseDate);
+        outState.putString(LIFECYCLE_CALLBACKS_DATE_KEY, releaseDate);**/
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        final int[] scrollPosition = savedInstanceState.getIntArray(SCROLLVIEW);
+        if(scrollPosition != null){
+            mScrollView.post(new Runnable() {
+                @Override
+                public void run() {
+                    mScrollView.scrollTo(scrollPosition[0], scrollPosition[1]);
+                }
+            });
+        }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_movie_details);
+
+        mScrollView = (ScrollView) findViewById(R.id.scrollView);
 
         mOriginalTitleTV = (TextView) findViewById(R.id.originalTitle);
 
@@ -164,7 +217,7 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
         initViews();
 
-        mDatabase = Database.getInstance(getApplicationContext());
+        mMoviePosterDatabase = MoviePosterDatabase.getInstance(getApplicationContext());
 
         if (savedInstanceState != null && savedInstanceState.containsKey(INSTANCE_MOVIE_ID)) {
             mMovieId = savedInstanceState.getInt(INSTANCE_MOVIE_ID, DEFAULT_MOVIE_ID);
@@ -180,7 +233,15 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
 
             mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
 
-            mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+            mLinearLayoutManager = new LinearLayoutManager(this);
+
+            //mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+            mRecyclerView.setLayoutManager(mLinearLayoutManager);
+
+            mUserReviewRecyclerView = (RecyclerView) findViewById(R.id.recyclerViewUserReview);
+
+            mUserReviewRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
             mCurrentMoviePoster = MovieAdapter.mMovieData.get(imageNumber);
 
@@ -219,9 +280,20 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
                     .appendPath("movie")
                     .appendPath(mCurrentMoviePoster.getId())
                     .appendPath("videos")
-                    .appendQueryParameter("api_key", "INSERT API KEY HERE");
+                    .appendQueryParameter("api_key", "Insert Api Key");
 
             mMovieTrailerUrl = trailerBuilder.build().toString();
+
+            Uri.Builder reviewBuilder = new Uri.Builder();
+            reviewBuilder.scheme("https")
+                    .authority("api.themoviedb.org")
+                    .appendPath("3")
+                    .appendPath("movie")
+                    .appendPath(mCurrentMoviePoster.getId())
+                    .appendPath("reviews")
+                    .appendQueryParameter("api_key", "Insert Api Key");
+
+            mUserReviewUrl = reviewBuilder.build().toString();
 
             populateUi();
 
@@ -236,40 +308,57 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
                 }
             });
 
-            getLoaderManager().initLoader(R.layout.activity_movie_details, new Bundle(), new LoaderManager.LoaderCallbacks<List<Trailer>>() {
-
+            LoaderManager.LoaderCallbacks<List<Trailer>> trailerLoaderManager = new LoaderManager.LoaderCallbacks<List<Trailer>>() {
                 @Override
-                public Loader<List<Trailer>> onCreateLoader(int id, Bundle args) {
+                public Loader<List<Trailer>> onCreateLoader(int i, Bundle bundle) {
                     return new TrailerLoader(MovieDetails.this, mMovieTrailerUrl);
                 }
 
                 @Override
-                public void onLoadFinished(Loader<List<Trailer>> loader, List<Trailer> data) {
-                    mMovieTrailerAdapter = new MovieTrailerAdapter(MovieDetails.this, data);
+                public void onLoadFinished(Loader<List<Trailer>> loader, List<Trailer> trailer) {
+                    mMovieTrailerAdapter = new MovieTrailerAdapter(MovieDetails.this, trailer);
                     mRecyclerView.setAdapter(mMovieTrailerAdapter);
                 }
 
                 @Override
                 public void onLoaderReset(Loader<List<Trailer>> loader) {
                 }
-            });
+            };
+
+            LoaderManager.LoaderCallbacks<List<UserReview>> userReviewLoaderManager = new LoaderManager.LoaderCallbacks<List<UserReview>>() {
+                @Override
+                public Loader<List<UserReview>> onCreateLoader(int i, Bundle bundle) {
+                    return new UserReviewLoader(MovieDetails.this, mUserReviewUrl);
+                }
+
+                @Override
+                public void onLoadFinished(Loader<List<UserReview>> loader, List<UserReview> userReviews) {
+                    mUserReviewAdapter = new UserReviewAdapter(MovieDetails.this, userReviews);
+                    mUserReviewRecyclerView.setAdapter(mUserReviewAdapter);
+                }
+
+                @Override
+                public void onLoaderReset(Loader<List<UserReview>> loader) {
+                }
+            };
+
+            getLoaderManager().initLoader(TRAILER_LOADER, new Bundle(), trailerLoaderManager);
+
+            getLoaderManager().initLoader(USER_REVIEW_LOADER, new Bundle(), userReviewLoaderManager);
         }
+
+
     }
 
+    /**@Override
+    protected void onPause() {
+        super.onPause();
+        mScreenPosition = ((LinearLayoutManager) mRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
+    }**/
 
     @Override
-    public Loader<List<Trailer>> onCreateLoader(int id, Bundle args) {
-        return new TrailerLoader(this, mMovieTrailerUrl);
-    }
-
-    @Override
-    public void onLoadFinished(Loader<List<Trailer>> loader, List<Trailer> data) {
-        mMovieTrailerAdapter = new MovieTrailerAdapter(this, data);
-        mRecyclerView.setAdapter(mMovieTrailerAdapter);
-    }
-
-    @Override
-    public void onLoaderReset(Loader<List<Trailer>> loader) {
+    protected void onResume() {
+        super.onResume();
     }
 
     public void populateUi() {
@@ -304,7 +393,7 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
                 mCurrentMoviePoster.getImageURL(), mCurrentMoviePoster.getPlotSynopsis(),
                 mCurrentMoviePoster.getUserRating(), mCurrentMoviePoster.getReleaseDate());
 
-        mDatabase.movieDao().insertMovie(moviePoster);
+        mMoviePosterDatabase.movieDao().insertMovie(moviePoster);
 
         finish();
     }
@@ -315,70 +404,4 @@ public class MovieDetails extends AppCompatActivity implements LoaderManager.Loa
         startActivity(youtubeIntent);
     }
 
-    public class UserReviewDetails extends AppCompatActivity implements LoaderManager.LoaderCallbacks<List<UserReview>> {
-
-        private String mUserReviewUrl;
-
-        private UserReviewAdapter mUserReviewAdapter;
-
-        private RecyclerView mUserReviewRecyclerView;
-
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-
-            Uri.Builder reviewBuilder = new Uri.Builder();
-            reviewBuilder.scheme("https")
-                    .authority("api.themoviedb.org")
-                    .appendPath("3")
-                    .appendPath("movie")
-                    .appendPath(mCurrentMoviePoster.getId())
-                    .appendPath("reviews")
-                    .appendQueryParameter("api_key", "INSERT API KEY HERE");
-
-            mUserReviewUrl = reviewBuilder.build().toString();
-
-            mUserReviewRecyclerView = (RecyclerView) findViewById(R.id.recyclerViewUserReview);
-
-            mUserReviewRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-            getReviewRecyclerView();
-        }
-
-
-        public void getReviewRecyclerView() {
-            getLoaderManager().initLoader(R.layout.activity_movie_details, new Bundle(), new LoaderManager.LoaderCallbacks<List<UserReview>>() {
-
-                @Override
-                public Loader<List<UserReview>> onCreateLoader(int id, Bundle args) {
-                    return new UserReviewLoader(MovieDetails.this, mUserReviewUrl);
-                }
-
-                @Override
-                public void onLoadFinished(Loader<List<UserReview>> loader, List<UserReview> data) {
-                    mUserReviewAdapter = new UserReviewAdapter(MovieDetails.this, data);
-                    mUserReviewRecyclerView.setAdapter(mUserReviewAdapter);
-                }
-
-                @Override
-                public void onLoaderReset(Loader<List<UserReview>> loader) {
-                }
-            });
-        }
-
-        @Override
-        public Loader<List<UserReview>> onCreateLoader(int id, Bundle args) {
-            return new UserReviewLoader(this, mUserReviewUrl);
-        }
-
-        @Override
-        public void onLoadFinished(Loader<List<UserReview>> loader, List<UserReview> data) {
-            mUserReviewAdapter = new UserReviewAdapter(MovieDetails.this, data);
-            mUserReviewRecyclerView.setAdapter(mUserReviewAdapter);
-        }
-
-        @Override
-        public void onLoaderReset(Loader<List<UserReview>> loader) {
-        }
-    }
 }
