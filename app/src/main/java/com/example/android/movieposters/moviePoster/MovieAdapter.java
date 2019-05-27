@@ -35,7 +35,11 @@ public class MovieAdapter extends BaseAdapter {
     }
 
     public int getCount() {
-        return mMovieData.size();
+        if(mMovieData == null){
+            return 0;
+        }else{
+            return mMovieData.size();
+        }
     }
 
     public Object getItem(int position) {
