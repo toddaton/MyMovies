@@ -24,7 +24,7 @@ import java.net.URL;
 
 public final class TrailerUtils {
 
-    private static final String LOG_TAG = ApiUtils.class.getSimpleName();
+    private static final String LOG_TAG = TrailerUtils.class.getSimpleName();
 
     private static URL mUrl;
 
@@ -80,7 +80,7 @@ public final class TrailerUtils {
                 Log.e(LOG_TAG, "Error response code: " + urlConnection.getResponseCode());
             }
         } catch (IOException e) {
-            Log.e(LOG_TAG, "Problem retrieving the Movie Poster JSON results.", e);
+            Log.e(LOG_TAG, "Problem retrieving the Trailer JSON results.", e);
         } finally {
             if (urlConnection != null) {
                 urlConnection.disconnect();
@@ -132,7 +132,7 @@ public final class TrailerUtils {
             }
 
         } catch (JSONException e) {
-            Log.e("ApiUtils", "Problem parsing trailer results", e);
+            Log.e("TrailerUtils", "Problem parsing trailer results", e);
         }
         return trailers;
     }
