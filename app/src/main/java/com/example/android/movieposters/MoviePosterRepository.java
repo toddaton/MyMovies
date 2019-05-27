@@ -2,7 +2,6 @@ package com.example.android.movieposters.database;
 
 import android.app.Application;
 import android.arch.lifecycle.LiveData;
-import android.arch.persistence.room.Dao;
 import android.os.AsyncTask;
 
 import com.example.android.movieposters.moviePoster.MoviePoster;
@@ -16,8 +15,8 @@ public class MoviePosterRepository {
     private LiveData<List<MoviePoster>> mFavoriteMovies;
 
     MoviePosterRepository(Application application){
-        Database database = Database.getInstance(application);
-        mMovieDao = database.movieDao();
+        MoviePosterDatabase moviePosterDatabase = MoviePosterDatabase.getInstance(application);
+        mMovieDao = moviePosterDatabase.movieDao();
         mFavoriteMovies = mMovieDao.loadAllTasks();
     }
 
